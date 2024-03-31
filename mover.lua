@@ -814,8 +814,42 @@ minetest.register_node("basic_machines:mover", {
 		end
 		
 		-- REMOVE DIGGED NODE
-		if not(target_chest) then
-			if not drop then minetest.set_node(pos2, {name = node1.name}); end
+		if not (target_chest) then
+			if not drop then
+				-- get node (seed) table definition
+				local udef = minetest.registered_nodes[node1.name]
+
+				-- create pointed_thing table
+				local pointed_thing = {
+					type = "node",
+					above = {
+						y = pos2.y,
+						x = pos2.x,
+						z = pos2.z
+					},
+					under = {
+						y = pos2.y - 1,
+						x = pos2.x,
+						z = pos2.z
+					}
+				}
+
+				-- get ObjectRef
+				local placer = minetest.get_player_by_name(owner)
+				-- create ItemStack table
+				local stack = ItemStack(node1.name)
+
+				-- use default behaviour on_place if found in udef 
+				if udef and
+					 udef.on_place and
+					 placer ~= nil then
+					udef.on_place(stack, placer, pointed_thing)
+				-- on_place not found in udef - use set_node instead
+				else
+					minetest.set_node(pos2, {name = node1.name})
+				end
+			end
+			
 			if drop then 
 				local stack = ItemStack(node1.name);
 				minetest.add_item(pos2,stack) -- drops it
